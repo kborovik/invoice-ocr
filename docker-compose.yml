@@ -1,0 +1,55 @@
+services:
+
+  postgres:
+    image: postgres:16.5
+    container_name: postgres-1
+    hostname: postgres-1
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?err}
+      - POSTGRES_DB=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - type: volume
+        source: postgres
+        target: /var/lib/postgresql/data
+
+  # invoice-ocr:
+  #   image: ghcr.io/kborovik/invoice-ocr:${VERSION:-latest}
+  #   container_name: invoice-ocr-1
+  #   hostname: invoice-ocr-1
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?err}
+  #     - POSTGRES_DB=postgres
+  #   ports:
+  #     - 8000:8000
+  #   depends_on:
+  #     postgres:
+  #       condition: service_completed_successfully
+  #   healthcheck:
+  #     test: curl -f http://127.0.0.1:8000/health
+  #     interval: 10s
+  #     timeout: 2s
+  #     retries: 2
+  #     start_interval: 1s
+  #     start_period: 10s
+  #   volumes:
+  #     - type: volume
+  #       source: invoice-ocr
+  #       target: /data
+
+volumes:
+  postgres:
+    name: postgres
+    external: true
+  invoice-ocr:
+    name: invoice-ocr
+    external: true
