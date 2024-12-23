@@ -8,24 +8,6 @@ import re
 from pydantic import BaseModel, Field, field_validator
 
 
-class CompanyName(BaseModel):
-    id: str = Field(
-        title="Company ID",
-        description="Company ID based on the following pattern: 4 uppercase letters followed by 1 digit",
-        pattern="^[A-Z]{4}[0-9]{1}$",
-    )
-    name: str = Field(
-        title="Company Name",
-        description="Company name",
-    )
-
-    @field_validator("id")
-    def validate_company_id(value: str) -> str:  # noqa: N805
-        if not re.match(r"^[A-Z]{4}[0-9]{1}$", value):
-            raise ValueError("Company ID must be 4 uppercase letters followed by 1 number")
-        return value
-
-
 class Address(BaseModel):
     building_number: str = Field(
         title="Building Number",
@@ -57,7 +39,8 @@ class Address(BaseModel):
 class Company(BaseModel):
     id: str = Field(
         title="Company ID",
-        description="Company ID",
+        description="Company ID based on the following pattern: 4 uppercase letters followed by 1 digit",
+        pattern="^[A-Z]{4}[0-9]{1}$",
     )
     name: str = Field(
         title="Company Name",
@@ -79,6 +62,12 @@ class Company(BaseModel):
         title="Website",
         description="Website URL",
     )
+
+    @field_validator("id")
+    def validate_company_id(value: str) -> str:  # noqa: N805
+        if not re.match(r"^[A-Z]{4}[0-9]{1}$", value):
+            raise ValueError("Company ID must be 4 uppercase letters followed by 1 number")
+        return value
 
 
 class Invoice(BaseModel):

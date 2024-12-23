@@ -106,7 +106,7 @@ ruff-lint:
 
 lint: ruff-lint ruff-format ## Lint Python code
 
-version: db-schema
+version: db-schema ## Update version
 	$(eval pre_release := $(shell date '+%H%M' | sed 's/^0*//'))
 	$(eval version := $(shell date '+%Y.%m.%d.post$(pre_release)'))
 	set -e
@@ -114,7 +114,7 @@ version: db-schema
 	uv sync --inexact
 	git add --all
 
-commit: db-schema ruff-lint ruff-format
+commit: db-schema lint ## Commit changes
 	git commit -m "Patch: $(NAME) v$(VERSION)"
 
 release: setup db-schema ## Create GitHub Release
