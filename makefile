@@ -7,7 +7,8 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 PATH := $(HOME)/.cargo/bin:$(abspath .venv)/bin:$(PATH)
 
-LOGFIRE_TOKEN := $(shell pass logfire/invoice-ocr)
+LOGFIRE_TOKEN := $(file < $(HOME)/.secrets/LOGFIRE_TOKEN)
+GEMINI_API_KEY := $(file < $(HOME)/.secrets/GEMINI_API_KEY)
 
 ifneq (,$(wildcard pyproject.toml))
 NAME := $(shell yq -p toml -o yaml '.project.name' pyproject.toml)
@@ -21,6 +22,7 @@ settings: setup
 	$(call var,NAME,$(NAME))
 	$(call var,MODULE,$(MODULE))
 	$(call var,LOGFIRE_TOKEN,$(LOGFIRE_TOKEN))
+	$(call var,GEMINI_API_KEY,$(GEMINI_API_KEY))
 
 help:
 	echo "Usage: make [recipe]"
@@ -36,8 +38,6 @@ help:
 
 setup: $(uv_bin) .gitignore data .venv uv.lock
 
-test: ## Run tests
-
 build: setup ## Build Python package
 	uv build --wheel
 
@@ -48,6 +48,9 @@ update: ## Update Python packages
 clean: ## Reset development environment
 	rm -rf .venv requirements.txt build/ dist/ *.egg-info/
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+
+run-generate: ## Run Python generate module
+	uv run -m invoice_ocr.generate
 
 uv_bin := $(HOME)/.cargo/bin/uv
 
@@ -95,8 +98,15 @@ uv.lock: pyproject.toml
 requirements.txt: uv.lock
 	uv pip freeze --exclude-editable --color never >| $(@)
 
-.PHONY: version
-version: db-schema ## Generate version
+ruff-format:
+	ruff format .
+
+ruff-lint:
+	ruff check --fix .
+
+lint: ruff-lint ruff-format ## Lint Python code
+
+version: db-schema
 	$(eval pre_release := $(shell date '+%H%M' | sed 's/^0*//'))
 	$(eval version := $(shell date '+%Y.%m.%d.post$(pre_release)'))
 	set -e
@@ -104,14 +114,9 @@ version: db-schema ## Generate version
 	uv sync --inexact
 	git add --all
 
-.PHONY: commit
-commit: db-schema ## Commit changes
-	set -e
-	ruff format --check .
-	ruff check .
+commit: db-schema ruff-lint ruff-format
 	git commit -m "Patch: $(NAME) v$(VERSION)"
 
-.PHONY: release
 release: setup db-schema ## Create GitHub Release
 	$(eval version := $(shell date '+%Y.%m.%d'))
 	set -e
@@ -192,7 +197,7 @@ db-schema: ## Apply Database Schema
 	atlas schema apply \
 	--url $(POSTGRES_URI)/$(POSTGRES_DB)?sslmode=disable \
 	--dev-url $(POSTGRES_URI)/$(atlas_db)?sslmode=disable \
-	--to file://sql/schema.sql
+	--to file://src/invoice_ocr/schema.sql
 
 db-inspect: ## Inspect Database Schema
 	atlas schema inspect \
@@ -200,7 +205,7 @@ db-inspect: ## Inspect Database Schema
 	--format '{{ sql . }}'
 
 db-clean: ## Drop Database Schema
-	psql $(POSTGRES_URI)/$(POSTGRES_DB) -c 'DROP TABLE invoices;' || true
+	-psql $(POSTGRES_URI)/$(POSTGRES_DB) -c 'DROP TABLE invoices;'
 
 ###############################################################################
 # Colors and Headers
