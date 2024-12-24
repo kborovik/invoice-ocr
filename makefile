@@ -36,7 +36,7 @@ help:
 		} \
 	}' $(MAKEFILE_LIST)
 
-setup: $(uv_bin) .gitignore data .venv uv.lock
+setup: $(uv_bin) .gitignore data .venv .env uv.lock
 
 build: setup ## Build Python package
 	uv build --wheel
@@ -63,7 +63,17 @@ $(uv_bin):
 	cat << EOF > $(@)
 	**/__pycache__/
 	**/data/
+	.venv/
+	.env
 	EOF
+
+define DOT_ENV
+GEMINI_API_KEY=$(GEMINI_API_KEY)
+LOGFIRE_TOKEN=$(LOGFIRE_TOKEN)
+endef
+
+.env:
+	echo "$$DOT_ENV" > $(@)
 
 data:
 	mkdir -p $(@)

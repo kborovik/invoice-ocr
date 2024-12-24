@@ -3,6 +3,9 @@ from typing import cast
 
 import google.auth
 from pydantic_ai.models import KnownModelName
+import dotenv
+
+dotenv.load_dotenv()
 
 GOOGLE_CREDENTIALS, GOOGLE_PROJECT_ID = google.auth.default()
 

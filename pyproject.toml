@@ -22,7 +22,10 @@ build-backend = "hatchling.build"
 requires = [ "hatchling" ]
 
 [dependency-groups]
-dev = [ "ruff>=0.8.4" ]
+dev = [
+ "python-dotenv>=1.0.1",
+ "ruff>=0.8.4",
+]
 
 [tool.uv.sources]
 invoice_ocr = { workspace = true }

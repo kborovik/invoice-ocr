@@ -9,65 +9,63 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class Address(BaseModel):
-    building_number: str = Field(
-        title="Building Number",
-        description="Building number",
+    address_line1: str = Field(
+        description="Address Line 1, Required",
     )
-    street: str = Field(
-        title="Street",
-        description="Street name",
+    address_line2: str = Field(
+        description="Address Line 2, Optional",
     )
     city: str = Field(
-        title="City",
         description="City name",
     )
     province: str = Field(
-        title="Province",
         description="Province name",
     )
     postal_code: str = Field(
-        title="Postal Code",
         description="Postal Code",
     )
     country: str = Field(
-        title="Country",
         description="Country name",
         default="Canada",
     )
 
+    @field_validator("postal_code", "country")
+    def validate_postal_code(postal_code: str, country: str) -> str:  # noqa: N805
+        if country == "Canada" and not re.match(r"^[A-Z]\d[A-Z]\s?\d[A-Z]\d$", postal_code):
+            raise ValueError("Invalid Canadian postal code")
+        return postal_code
+
 
 class Company(BaseModel):
-    id: str = Field(
-        title="Company ID",
-        description="Company ID based on the following pattern: 4 uppercase letters followed by 1 digit",
+    company_id: str = Field(
+        description="Human readable Company ID",
         pattern="^[A-Z]{4}[0-9]{1}$",
     )
-    name: str = Field(
-        title="Company Name",
+    company_name: str = Field(
         description="Company name",
     )
-    address: Address = Field(
-        title="Company Address",
-        description="Company address",
+    address_billing: Address = Field(
+        description="Company billing address",
+    )
+    address_shipping: Address = Field(
+        description="Company shipping address",
+        default=None,
     )
     phone_number: str = Field(
-        title="Phone Number",
         description="Phone number",
     )
     email: str = Field(
-        title="Email",
         description="Email address",
     )
     website: str = Field(
-        title="Website",
         description="Website URL",
     )
 
-    @field_validator("id")
-    def validate_company_id(value: str) -> str:  # noqa: N805
-        if not re.match(r"^[A-Z]{4}[0-9]{1}$", value):
+    @field_validator("company_id")
+    def validate_company_id(company_id: str) -> str:  # noqa: N805
+        if not re.match(r"^[A-Z]{4}[0-9]{1}$", company_id):
             raise ValueError("Company ID must be 4 uppercase letters followed by 1 number")
-        return value
+        return company_id
 
 
 class Invoice(BaseModel):
