@@ -1,9 +1,14 @@
 from importlib.metadata import version
 
+import logfire
+
 from .__main__ import main
-from .logging import setup_logging
+from .settings import LOGFIRE_SERVICE_NAME
 
 __all__ = ["invoice_ocr", "main"]
 __version__ = version("invoice_ocr")
 
-logger = setup_logging()
+logfire.configure(
+    send_to_logfire="if-token-present",
+    service_name=LOGFIRE_SERVICE_NAME,
+)
