@@ -9,7 +9,7 @@ import logfire
 from pydantic_ai import Agent, UserError
 from pydantic_ai.settings import ModelSettings
 
-from .database import put_company
+from .database import add_company
 from .schema import Company
 from .settings import PYDANTIC_AI_MODEL
 
@@ -48,5 +48,4 @@ if __name__ == "__main__":
     companies = gen_companies(quantity=2)
 
     for company in companies:
-        logfire.info(f"Inserting company: {company.company_name}")
-        put_company(company)
+        add_company(company)

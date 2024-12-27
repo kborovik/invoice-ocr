@@ -12,7 +12,7 @@ description = "Process invoices using Google Cloud Vision API"
 name = "invoice-ocr"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2024.12.24.post1917"
+version = "2024.12.27.post916"
 
 [project.scripts]
 invoice-ocr = "invoice_ocr:main"
@@ -23,9 +23,12 @@ requires = [ "hatchling" ]
 
 [dependency-groups]
 dev = [
- "python-dotenv>=1.0.1",
- "ruff>=0.8.4",
+  "python-dotenv>=1.0.1",
+  "ruff>=0.8.4",
 ]
+
+[tool.setuptools]
+packages = { find = { exclude = [ "*.generate" ] } }
 
 [tool.uv.sources]
 invoice_ocr = { workspace = true }
