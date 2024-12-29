@@ -298,7 +298,7 @@ wheels = [
 
 [[package]]
 name = "invoice-ocr"
-version = "2024.12.27.post916"
+version = "2024.12.28.post2142"
 source = { editable = "." }
 dependencies = [
     { name = "google-cloud-storage" },

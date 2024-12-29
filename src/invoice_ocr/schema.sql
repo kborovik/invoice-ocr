@@ -27,6 +27,17 @@ create table if not exists companies (
   updated_at timestamp default current_timestamp
 );
 
+--- Corresponds to Python class InvoiceItem
+create table if not exists invoice_items (
+  id serial primary key,
+  item_sku char(5) not null unique,
+  item_info varchar(255) not null,
+  quantity integer not null,
+  unit_price decimal(10, 2) not null,
+  created_at timestamp default current_timestamp,
+  updated_at timestamp default current_timestamp
+);
+
 -- Corresponds to Python class Invoice
 create table if not exists invoices (
   id serial primary key,

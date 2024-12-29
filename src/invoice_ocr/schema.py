@@ -1,9 +1,11 @@
 """
 Cody Instructions:
-- Use Pydantic v2.0.0 and above
+- Use Python 3.10+
+- Use Pydantic v2.0+
 """
 
 import re
+from datetime import datetime, timedelta
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -38,7 +40,7 @@ class Address(BaseModel):
 
 class Company(BaseModel):
     company_id: str = Field(
-        description="Human readable Company ID",
+        description="Human readable Company ID, must be 4 uppercase letters followed by 1 number",
         pattern="^[A-Z]{4}[0-9]{1}$",
     )
     company_name: str = Field(
@@ -68,12 +70,49 @@ class Company(BaseModel):
         return company_id
 
 
+class InvoiceItem(BaseModel):
+    item_sku: str = Field(
+        description="Stock Keeping Unit (SKU) number, must be 4 uppercase letters followed by 1 number",
+        pattern="^[A-Z]{4}[0-9]{1}$",
+    )
+    item_info: str = Field(
+        description="Item or service short information description",
+    )
+    quantity: int = Field(
+        description="Quantity of items",
+    )
+    unit_price: float = Field(
+        description="Price per unit",
+    )
+
+
 class Invoice(BaseModel):
-    supplier_name: str = Field(
-        title="Supplier Name",
+    invoice_number: str = Field(
+        description="Unique invoice identifier",
+    )
+    issue_date: datetime = Field(
+        description="Date when invoice was issued",
+        default_factory=lambda: datetime.now(),
+    )
+    supplier: Company = Field(
         description="The name of the supplier company organization.",
     )
-    supplier_address: Address = Field(
-        title="Supplier Address",
+    customer: Company = Field(
         description="The address of the supplier company organization.",
+    )
+    line_items: list[InvoiceItem] = Field(
+        description="List of items or services being billed",
+        default_factory=list,
+    )
+    tax_rate: int = Field(
+        description="Tax rate applied to the invoice line_items expressed as a percentage",
+        default=13,
+    )
+    payment_terms: str = Field(
+        description="Payment terms statement (e.g. 'Net 30', 'Due upon receipt')",
+        default="Net 30",
+    )
+    payment_delta: datetime = Field(
+        description="Payment terms delta (e.g. '30 days')",
+        default_factory=lambda: datetime.now() + timedelta(days=30),
     )
