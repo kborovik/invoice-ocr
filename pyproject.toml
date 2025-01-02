@@ -6,13 +6,13 @@ dependencies = [
   "google-cloud-storage>=2.19.0",
   "logfire[psycopg,system-metrics]>=2.9.0",
   "psycopg[binary,pool]>=3.2.3",
-  "pydantic-ai-slim[logfire,openai,vertexai]>=0.0.14",
+  "pydantic-ai-slim[anthropic,logfire,openai,vertexai]>=0.0.14",
 ]
 description = "Process invoices using Google Cloud Vision API"
 name = "invoice-ocr"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2025.01.01.post1902"
+version = "2025.01.02.post1633"
 
 [project.scripts]
 invoice-ocr = "invoice_ocr:main"
@@ -23,8 +23,8 @@ requires = [ "hatchling" ]
 
 [dependency-groups]
 dev = [
-  "pytest>=8.3.4",
   "pytest-mock>=3.14.0",
+  "pytest>=8.3.4",
   "python-dotenv>=1.0.1",
   "ruff>=0.8.4",
 ]
@@ -44,3 +44,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = [ "C90", "F", "N", "N", "PL", "RUF", "SIM", "UP" ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

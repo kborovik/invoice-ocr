@@ -39,7 +39,33 @@ except Exception as error:
 
 
 def add_company(company: Company) -> SqlId | None:
-    """Add Company object to database."""
+    """Adds a new company to the database with its billing and optional shipping address.
+
+    This function inserts a company's details into the database, including:
+    - Inserting billing address into postal_addresses table
+    - Optionally inserting shipping address into postal_addresses table
+    - Inserting company details into companies table with address references
+
+    Args:
+        company (Company): A Company object containing company details including:
+            - company_id (str): Unique identifier for the company
+            - company_name (str): Name of the company
+            - address_billing (Address): Billing address details
+            - address_shipping (Address, optional): Shipping address details
+            - phone_number (str): Company phone number
+            - email (str): Company email address
+            - website (str): Company website URL
+
+    Returns:
+        SqlId | None: The database ID of the newly inserted company if successful,
+        None if insertion fails due to:
+        - Duplicate company ID
+        - Database insertion errors
+
+    Raises:
+        UniqueViolation: If a company with the same company_id already exists
+        Exception: For any other database-related errors during insertion
+    """
 
     with (
         POSTGRES_POOL.connection() as conn,
@@ -57,6 +83,7 @@ def add_company(company: Company) -> SqlId | None:
             address_billing_id = cur.fetchone()["id"]
         except Exception as error:
             logfire.error(f"Failed to insert billing address: {error}")
+            return None
 
         try:
             if company.address_shipping:
@@ -67,6 +94,7 @@ def add_company(company: Company) -> SqlId | None:
                 address_shipping_id = None
         except Exception as error:
             logfire.error(f"Failed to insert shipping address: {error}")
+            return None
 
         try:
             query_company = """
@@ -103,13 +131,21 @@ def add_company(company: Company) -> SqlId | None:
 
 
 def get_company(company_id: str) -> Company | None:
-    """Fetch company from database by company_id.
+    """Retrieves a company's details from the database by its unique company ID.
+
+    This function queries the database to fetch comprehensive company information,
+    including basic company details and both billing and shipping addresses.
+    It performs a left join with postal addresses to retrieve address information.
 
     Args:
-        company_id: Company identifier to search for
+        company_id (str): The unique identifier of the company to retrieve.
 
     Returns:
-        Company objects matching the company_id
+        Company | None: A Company object with all retrieved details if found,
+        or None if no company is found or an error occurs during retrieval.
+
+    Raises:
+        Exception: Logs and returns None if any database or query-related error occurs.
     """
     with (
         POSTGRES_POOL.connection() as conn,
@@ -138,6 +174,10 @@ def get_company(company_id: str) -> Company | None:
             """
             cur.execute(query=query, params={"company_id": company_id})
             results = cur.fetchone()
+
+            if results is None:
+                logfire.info(f"No company found with ID: {company_id}")
+                return None
 
             company = Company(
                 company_id=results["company_id"],
@@ -175,13 +215,17 @@ def get_company(company_id: str) -> Company | None:
 
 
 def find_company(query: str) -> list[Company] | list[None]:
-    """Search companies by company_id, company_name, phone_number, email, website.
+    """Searches for companies in the database based on a search query.
+
+    Searches across company_id, company_name, phone_number, email, and website
+    using case-insensitive partial matching.
 
     Args:
-        query: Search string to match against multiple company fields
+        query: A string to search for in company details.
 
     Returns:
-        List of Company objects matching the search criteria
+        A list of Company objects matching the search query, or an empty list
+        if no companies are found or an error occurs.
     """
     with (
         POSTGRES_POOL.connection() as conn,
@@ -216,15 +260,21 @@ def find_company(query: str) -> list[Company] | list[None]:
 
         except Exception as error:
             logfire.error(f"Failed to search companies: {error}")
-            return list[None]
+            return []
 
 
 def add_invoice_item(invoice_item: InvoiceItem) -> SqlId | None:
-    """Add InvoiceItem object to database.
+    """Adds a new invoice item to the database.
+
+    Args:
+        invoice_item: The InvoiceItem object to be inserted into the database.
 
     Returns:
-     - On success SQL invoice_items table primary key (id)
-     - On failure None
+        The ID of the newly inserted invoice item if successful, None otherwise.
+
+    Raises:
+        UniqueViolation: If an invoice item with the same SKU already exists.
+        Exception: For any other database insertion errors.
     """
 
     with (
@@ -257,14 +307,73 @@ def add_invoice_item(invoice_item: InvoiceItem) -> SqlId | None:
             return None
 
 
-def get_invoice_items(limit: int = 2) -> list[InvoiceItem]:
-    """Fetch invoice items from database with specified limit.
+def get_invoice_item(item_sku: str) -> InvoiceItem | None:
+    """Retrieves a single invoice item from the database by its SKU.
+
+    This function queries the database to fetch an invoice item's details using
+    its unique SKU (Stock Keeping Unit). It returns comprehensive information
+    about the item including its description, quantity, and unit price.
 
     Args:
-        limit: Maximum number of invoice items to return
+        item_sku (str): The unique Stock Keeping Unit identifier for the invoice item.
 
     Returns:
-        List of InvoiceItem objects
+        InvoiceItem | None: An InvoiceItem object containing all item details if found,
+        or None if no item matches the provided SKU or if an error occurs.
+
+    Raises:
+        Exception: Logs the error and returns None if any database or query-related
+            error occurs during retrieval.
+    """
+    with (
+        POSTGRES_POOL.connection() as conn,
+        conn.cursor(row_factory=dict_row) as cur,
+        logfire.span("Get Invoice Item from DB"),
+    ):
+        try:
+            query = """
+                SELECT item_sku, item_info, quantity, unit_price
+                FROM invoice_items 
+                WHERE item_sku = %(item_sku)s;
+            """
+            cur.execute(query=query, params={"item_sku": item_sku})
+            result = cur.fetchone()
+
+            if result is None:
+                return None
+
+            invoice_item = InvoiceItem(**result)
+
+            logfire.info(
+                f"Retrieved invoice item: {invoice_item.item_sku} - {invoice_item.item_info}"
+            )
+
+            return invoice_item
+
+        except Exception as error:
+            logfire.error(f"Failed to fetch invoice item: {error}")
+            return None
+
+
+def get_invoice_items(limit: int = 2) -> list[InvoiceItem]:
+    """Retrieves a list of the most recent invoice items from the database.
+
+    This function queries the database to fetch multiple invoice items, ordered by
+    their creation date in descending order. The number of items returned is
+    controlled by the limit parameter.
+
+    Args:
+        limit (int, optional): Maximum number of invoice items to retrieve.
+            Defaults to 2.
+
+    Returns:
+        list[InvoiceItem]: A list of InvoiceItem objects containing the most
+            recent invoice items. Returns an empty list if no items are found
+            or if an error occurs.
+
+    Raises:
+        Exception: Logs the error and returns an empty list if any database
+            or query-related error occurs during retrieval.
     """
     with (
         POSTGRES_POOL.connection() as conn,
@@ -289,4 +398,51 @@ def get_invoice_items(limit: int = 2) -> list[InvoiceItem]:
 
         except Exception as error:
             logfire.error(f"Failed to fetch invoice items: {error}")
+            return []
+
+
+def find_invoice_item(query: str) -> list[InvoiceItem] | list[None]:
+    """Searches for invoice items in the database based on a search query.
+
+    This function performs a case-insensitive search across item_sku and item_info
+    fields in the invoice_items table. Results are ordered by creation date in
+    descending order.
+
+    Args:
+        query (str): A string to search for in invoice item details. The search is
+            performed using partial matching (contains) on both SKU and item info.
+
+    Returns:
+        list[InvoiceItem] | list[None]: A list of InvoiceItem objects matching the
+            search query, ordered by creation date (newest first). Returns an empty
+            list if no items are found or if an error occurs during the search.
+
+    Raises:
+        Exception: Logs the error and returns an empty list if any database or
+            query-related error occurs during the search operation.
+    """
+    with (
+        POSTGRES_POOL.connection() as conn,
+        conn.cursor(row_factory=dict_row) as cur,
+        logfire.span("Find Invoice Items in DB"),
+    ):
+        try:
+            search = f"%{query}%"
+            sql_query = """
+                SELECT item_sku, item_info, quantity, unit_price 
+                FROM invoice_items
+                WHERE item_sku ILIKE %(search)s
+                   OR item_info ILIKE %(search)s
+                ORDER BY created_at DESC;
+            """
+            cur.execute(query=sql_query, params={"search": search})
+            results = cur.fetchall()
+
+            invoice_items = [InvoiceItem(**item) for item in results]
+
+            logfire.info(f"Found {len(invoice_items)} invoice items matching '{query}'")
+            return invoice_items
+
+        except Exception as error:
+            logfire.error(f"Failed to search invoice items: {error}")
             return []

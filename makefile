@@ -9,6 +9,7 @@ PATH := $(HOME)/.cargo/bin:$(abspath .venv)/bin:$(PATH)
 
 LOGFIRE_TOKEN := $(file < $(HOME)/.secrets/LOGFIRE_TOKEN)
 GEMINI_API_KEY := $(file < $(HOME)/.secrets/GEMINI_API_KEY)
+ANTHROPIC_API_KEY := $(file < $(HOME)/.secrets/ANTHROPIC_API_KEY)
 
 ifneq (,$(wildcard pyproject.toml))
 NAME := $(shell yq -p toml -o yaml '.project.name' pyproject.toml)
@@ -23,6 +24,7 @@ settings: setup
 	$(call var,MODULE,$(MODULE))
 	$(call var,LOGFIRE_TOKEN,$(LOGFIRE_TOKEN))
 	$(call var,GEMINI_API_KEY,$(GEMINI_API_KEY))
+	$(call var,ANTHROPIC_API_KEY,$(ANTHROPIC_API_KEY))
 
 help:
 	echo "Usage: make [recipe]"
@@ -38,8 +40,17 @@ help:
 
 setup: $(uv_bin) .gitignore data .venv .env uv.lock
 
-test:
+test: db-schema ## Run Python tests
+	$(call header,Running Python tests)
 	pytest -v -m db
+
+ruff-format:
+	ruff format .
+
+ruff-lint:
+	ruff check --fix .
+
+lint: ruff-lint ruff-format ## Lint Python code
 
 build: setup ## Build Python package
 	uv build --wheel
@@ -71,8 +82,9 @@ $(uv_bin):
 	EOF
 
 define DOT_ENV
-GEMINI_API_KEY=$(GEMINI_API_KEY)
 LOGFIRE_TOKEN=$(LOGFIRE_TOKEN)
+GEMINI_API_KEY=$(GEMINI_API_KEY)
+ANTHROPIC_API_KEY=$(ANTHROPIC_API_KEY)
 endef
 
 .env:
@@ -110,14 +122,6 @@ uv.lock: pyproject.toml
 
 requirements.txt: uv.lock
 	uv pip freeze --exclude-editable --color never >| $(@)
-
-ruff-format:
-	ruff format .
-
-ruff-lint:
-	ruff check --fix .
-
-lint: ruff-lint ruff-format ## Lint Python code
 
 version: db-schema ## Update version
 	$(eval pre_release := $(shell date '+%H%M' | sed 's/^0*//'))
@@ -206,7 +210,7 @@ db-init: ## Initialize Database
 	-psql $(POSTGRES_URI) -c 'CREATE DATABASE $(atlas_db);'
 
 db-schema: ## Apply Database Schema
-	$(info ==> Applying Database Schema...<==)
+	$(call header,Applying Database Schema)
 	atlas schema apply \
 	--url $(POSTGRES_URI)/$(POSTGRES_DB)?sslmode=disable \
 	--dev-url $(POSTGRES_URI)/$(atlas_db)?sslmode=disable \
@@ -219,6 +223,9 @@ db-inspect: ## Inspect Database Schema
 
 db-clean: ## Drop Database Schema
 	-psql $(POSTGRES_URI)/$(POSTGRES_DB) -c 'DROP TABLE invoices;'
+	-psql $(POSTGRES_URI)/$(POSTGRES_DB) -c 'DROP TABLE companies;'
+	-psql $(POSTGRES_URI)/$(POSTGRES_DB) -c 'DROP TABLE postal_addresses;'
+	-psql $(POSTGRES_URI)/$(POSTGRES_DB) -c 'DROP TABLE invoice_items;'
 
 ###############################################################################
 # Colors and Headers

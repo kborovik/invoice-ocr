@@ -49,7 +49,7 @@ class Company(BaseModel):
     address_billing: Address = Field(
         description="Company billing address",
     )
-    address_shipping: Address = Field(
+    address_shipping: Address | None = Field(
         description="Company shipping address",
         default=None,
     )
