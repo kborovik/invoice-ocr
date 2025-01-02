@@ -1,7 +1,9 @@
 {
   "cSpell.words": [
+    "autouse",
     "conninfo",
     "dotenv",
-    "logfire"
+    "logfire",
+    "pytest"
   ]
 }

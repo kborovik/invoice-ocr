@@ -10,5 +10,16 @@
       "request": "launch",
       "module": "invoice_ocr.generate"
     },
+    {
+      "name": "pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "-v",
+        "tests/"
+      ],
+      "justMyCode": false
+    }
   ]
 }

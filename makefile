@@ -38,6 +38,9 @@ help:
 
 setup: $(uv_bin) .gitignore data .venv .env uv.lock
 
+test:
+	pytest -v -m db
+
 build: setup ## Build Python package
 	uv build --wheel
 
