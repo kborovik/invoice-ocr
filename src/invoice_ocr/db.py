@@ -1,3 +1,15 @@
+"""
+Database module for invoice OCR system.
+
+This module provides database connectivity and operations for the invoice OCR system using PostgreSQL.
+It handles database connection pooling and provides functions for managing companies, addresses,
+and invoice items in the database.
+
+The module uses psycopg for PostgreSQL connectivity with connection pooling for efficient
+database operations. Database credentials and connection settings are loaded from environment
+variables through the settings module.
+"""
+
 import sys
 from typing import TypeVar
 
@@ -14,8 +26,6 @@ from .settings import (
     POSTGRES_PORT,
     POSTGRES_USER,
 )
-
-__ALL__ = ["add_company", "add_invoice_item"]
 
 SqlId = TypeVar(name="SqlId", bound=int)
 """SQL primary key (id)"""
@@ -214,6 +224,55 @@ def get_company(company_id: str) -> Company | None:
             return None
 
 
+def get_companies(limit: int = 2) -> list[Company] | None:
+    """Retrieves a list of the most recent companies from the database.
+
+    This function queries the database to fetch multiple companies, ordered by
+    their creation date in descending order. The number of companies returned is
+    controlled by the limit parameter.
+
+    Args:
+        limit (int, optional): Maximum number of companies to retrieve.
+            Defaults to 2.
+
+    Returns:
+        list[Company] | None: A list of Company objects containing the most
+            recent companies. Returns None if an error occurs.
+
+    Raises:
+        Exception: Logs the error and returns None if any database
+            or query-related error occurs during retrieval.
+    """
+    with (
+        POSTGRES_POOL.connection() as conn,
+        conn.cursor(row_factory=dict_row) as cur,
+        logfire.span("Get Companies from DB"),
+    ):
+        try:
+            query = """
+                SELECT company_id
+                FROM companies
+                ORDER BY created_at DESC
+                LIMIT %(limit)s;
+            """
+            cur.execute(query=query, params={"limit": limit})
+            results = cur.fetchall()
+
+            companies = []
+            for result in results:
+                company = get_company(result["company_id"])
+                if company:
+                    companies.append(company)
+
+            logfire.info(f"Retrieved {len(companies)} companies")
+
+            return companies
+
+        except Exception as error:
+            logfire.error(f"Failed to fetch companies: {error}")
+            return None
+
+
 def find_company(query: str) -> list[Company] | list[None]:
     """Searches for companies in the database based on a search query.
 
@@ -255,7 +314,7 @@ def find_company(query: str) -> list[Company] | list[None]:
                     continue
                 companies.append(company)
 
-            logfire.info(f"Found {len(companies)} companies matching '{query}'")
+            logfire.info(f"Found {len(companies)} companies matching query: '{query}'")
             return companies
 
         except Exception as error:
@@ -440,7 +499,7 @@ def find_invoice_item(query: str) -> list[InvoiceItem] | list[None]:
 
             invoice_items = [InvoiceItem(**item) for item in results]
 
-            logfire.info(f"Found {len(invoice_items)} invoice items matching '{query}'")
+            logfire.info(f"Found {len(invoice_items)} invoice items matching query: '{query}'")
             return invoice_items
 
         except Exception as error:

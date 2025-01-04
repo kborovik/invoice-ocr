@@ -6,6 +6,7 @@ from invoice_ocr.db import (
     add_invoice_item,
     find_company,
     find_invoice_item,
+    get_companies,
     get_company,
     get_invoice_item,
     get_invoice_items,
@@ -56,6 +57,15 @@ def test_get_company():
     assert company.website == COMPANY.website
     assert company.address_billing == COMPANY.address_billing
     assert company.address_shipping == COMPANY.address_shipping
+
+
+@pytest.mark.db
+def test_get_companies():
+    companies = get_companies()
+    assert companies is not None
+    assert isinstance(companies, list)
+    assert len(companies) >= 1
+    assert isinstance(companies[0], Company)
 
 
 @pytest.mark.db

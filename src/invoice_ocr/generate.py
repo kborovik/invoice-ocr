@@ -1,4 +1,12 @@
 """
+This module provides functionality for generating synthetic invoice and company data.
+
+It uses Pydantic models and AI agents to create realistic test data for the invoice OCR system.
+Key components:
+- Company generation with unique IDs and Canadian addresses
+- Invoice generation with line items
+- Integration with database to avoid duplicates
+
 Cody Instructions:
 - Use Pydantic v2.0.0 and above
 """
@@ -83,7 +91,7 @@ invoice_agent = Agent(
     deps_type=InvoiceItemsDeps,
     result_type=list[InvoiceItem],
     system_prompt=(
-        "You are a helpful assistant that generates company information. "
+        "You are a helpful assistant that generates invoice line items. "
         "Do not use item_sku or item_info that are already in database. "
     ),
 )
