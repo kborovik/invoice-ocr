@@ -13,12 +13,15 @@ Cody Instructions:
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import logfire
+from jinja2 import Environment, FileSystemLoader
 from pydantic_ai import Agent, RunContext, UserError
 
 from invoice_ocr import db
 
+from .db import get_company, get_invoice_items
 from .schema import Company, Invoice, InvoiceItem
 
 
@@ -123,15 +126,37 @@ def create_invoice_items(quantity: int = 5) -> list[InvoiceItem]:
     return result.data
 
 
-def create_invoice() -> Invoice:
-    pass
+def generate_pdf_invoice(invoice: Invoice) -> None:
+    output_dir = Path("data")
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    env = Environment(loader=FileSystemLoader("src/invoice_ocr"))
+    template = env.get_template("invoice.j2")
+    html_content = template.render(
+        invoice_number=invoice.invoice_number,
+        issue_date=invoice.issue_date.strftime("%Y-%m-%d"),
+        due_date=invoice.due_date.strftime("%Y-%m-%d"),
+        supplier=invoice.supplier,
+        customer=invoice.customer,
+        line_items=invoice.line_items,
+        tax_rate=invoice.tax_rate,
+    )
+
+    output_file = output_dir / f"invoice-{invoice.invoice_number}.html"
+
+    output_file.write_text(html_content, encoding="utf-8")
 
 
 if __name__ == "__main__":
-    company = create_company()
-    company_id = db.add_company(company)
-    print(json.dumps(company.model_dump(exclude_none=True), indent=2))
-    invoice_items = create_invoice_items(quantity=5)
-    for invoice_item in invoice_items:
-        invoice_item_id = db.add_invoice_item(invoice_item)
-        print(json.dumps(invoice_item.model_dump(exclude_none=True), indent=2))
+    supplier = get_company(company_id="MHIA5")
+    customer = get_company(company_id="SOLT8")
+    invoice_items = get_invoice_items(limit=2)
+
+    invoice = Invoice(
+        invoice_number="INV-0001",
+        supplier=supplier,
+        customer=customer,
+        line_items=invoice_items,
+    )
+
+    generate_pdf_invoice(invoice)

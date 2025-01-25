@@ -22,6 +22,7 @@
 			width: 100%;
 			line-height: inherit;
 			text-align: left;
+			padding-bottom: 40px;
 		}
 
 		.invoice-box table td {
@@ -30,6 +31,14 @@
 		}
 
 		.invoice-box table tr td:nth-child(2) {
+			text-align: right;
+		}
+
+		.invoice-box table tr td:nth-child(3) {
+			text-align: right;
+		}
+
+		.invoice-box table tr td:nth-child(4) {
 			text-align: right;
 		}
 
@@ -44,7 +53,7 @@
 		}
 
 		.invoice-box table tr.information table td {
-			padding-bottom: 40px;
+			text-align: left;
 		}
 
 		.invoice-box table tr.heading td {
@@ -61,13 +70,16 @@
 			border-bottom: 1px solid #eee;
 		}
 
-		.invoice-box table tr.item.last td {
-			border-bottom: none;
+		.invoice-box table tr.subtotal td {
+			border-bottom: 1px solid #eee;
+			font-weight: bold;
+			text-align: right;
 		}
 
-		.invoice-box table tr.total td:nth-child(2) {
-			border-top: 2px solid #eee;
+		.invoice-box table tr.total td {
 			font-weight: bold;
+			text-align: right;
+			font-size: 18px;
 		}
 
 		@media only screen and (max-width: 600px) {
@@ -114,8 +126,8 @@
 
 							<td>
 								Invoice #: {{ invoice_number }}<br />
-								Created: January 1, 2023<br />
-								Due: February 1, 2023
+								Issue Date: {{ issue_date }}<br />
+								Due Date: {{ due_date }}
 							</td>
 						</tr>
 					</table>
@@ -127,65 +139,88 @@
 					<table>
 						<tr>
 							<td>
-								From:<br />
-								Sparksuite, Inc.<br />
-								12345 Sunny Road<br />
-								Sunnyville, CA 12345
+								<b>Supplier</b><br />
+								{{ supplier.company_name }}<br />
+								{{ supplier.address_billing.address_line1 }}<br />
+								{{ supplier.address_billing.address_line2 }}<br />
+								{{ supplier.address_billing.city }}, {{ supplier.address_billing.province }} {{
+								supplier.address_billing.postal_code }}
 							</td>
-
 							<td>
-								To:<br />
-								Acme Corp.<br />
-								John Doe<br />
-								john@example.com
+								<b>Customer</b><br />
+								{{ customer.company_name }}<br />
+								{{ customer.address_billing.address_line1 }}<br />
+								{{ customer.address_billing.address_line2 }}<br />
+								{{ customer.address_billing.city }}, {{ customer.address_billing.province }} {{
+								customer.address_billing.postal_code }}
 							</td>
 						</tr>
 					</table>
 				</td>
 			</tr>
+		</table>
 
+		<table>
 			<tr class="heading">
-				<td>Payment Method</td>
-
-				<td>Check #</td>
+				<td>Currency: CAD</td>
 			</tr>
+		</table>
 
-			<tr class="details">
-				<td>Check</td>
-
-				<td>1000</td>
-			</tr>
+		<table cellpadding="0" cellspacing="0">
 
 			<tr class="heading">
 				<td>Item</td>
-
-				<td>Price</td>
+				<td>Quantity</td>
+				<td>Unit Price</td>
+				<td>Amount</td>
 			</tr>
 
 			<tr class="item">
-				<td>Website design</td>
-
-				<td>$300.00</td>
-			</tr>
-
-			<tr class="item">
-				<td>Hosting (3 months)</td>
-
-				<td>$75.00</td>
-			</tr>
-
-			<tr class="item last">
-				<td>Domain name (1 year)</td>
-
+				<td>Item1</td>
+				<td>2</td>
 				<td>$10.00</td>
+				<td>$20.00</td>
 			</tr>
+
+			<tr class="item">
+				<td>Item2</td>
+				<td>3</td>
+				<td>$10.00</td>
+				<td>$30.00</td>
+			</tr>
+
+			<tr class="subtotal">
+				<td></td>
+				<td></td>
+				<td>Subtotal</td>
+				<td>$30.00</td>
+			</tr>
+
+			<tr class="heading">
+				<td></td>
+				<td></td>
+				<td>Tax Rate</td>
+				<td>Tax Amount</td>
+			</tr>
+
+			<tr class="item">
+				<td></td>
+				<td></td>
+				<td>HST Canada 13%</td>
+				<td>$100.00</td>
+			</tr>
+
+		</table>
+
+		<table cellpadding="0" cellspacing="0">
 
 			<tr class="total">
-				<td></td>
-
-				<td>Total: $385.00</td>
+				<td>Total Due</td>
+				<td>$100 CAD</td>
 			</tr>
+
 		</table>
+
 	</div>
 </body>
 

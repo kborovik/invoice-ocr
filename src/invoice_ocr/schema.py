@@ -112,7 +112,7 @@ class Invoice(BaseModel):
         description="Payment terms statement (e.g. 'Net 30', 'Due upon receipt')",
         default="Net 30",
     )
-    payment_delta: datetime = Field(
-        description="Payment terms delta (e.g. '30 days')",
+    due_date: datetime = Field(
+        description="Due date for payment",
         default_factory=lambda: datetime.now() + timedelta(days=30),
     )
