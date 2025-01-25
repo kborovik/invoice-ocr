@@ -126,7 +126,7 @@ def create_invoice_items(quantity: int = 5) -> list[InvoiceItem]:
     return result.data
 
 
-def generate_pdf_invoice(invoice: Invoice) -> None:
+def create_pdf_invoice(invoice: Invoice) -> None:
     output_dir = Path("data")
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
@@ -138,8 +138,12 @@ def generate_pdf_invoice(invoice: Invoice) -> None:
         due_date=invoice.due_date.strftime("%Y-%m-%d"),
         supplier=invoice.supplier,
         customer=invoice.customer,
+        currency=invoice.currency.value,
         line_items=invoice.line_items,
         tax_rate=invoice.tax_rate,
+        tax_total=invoice.tax_total_formatted,
+        subtotal=invoice.subtotal_formatted,
+        total=invoice.total_formatted,
     )
 
     output_file = output_dir / f"invoice-{invoice.invoice_number}.html"
@@ -159,4 +163,4 @@ if __name__ == "__main__":
         line_items=invoice_items,
     )
 
-    generate_pdf_invoice(invoice)
+    create_pdf_invoice(invoice)

@@ -13,7 +13,7 @@ description = "Process invoices using Google Cloud Vision API"
 name = "invoice-ocr"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2025.01.02.post1633"
+version = "2025.01.25.post816"
 
 [project.scripts]
 invoice-ocr = "invoice_ocr:main"

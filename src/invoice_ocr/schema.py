@@ -6,6 +6,7 @@ Cody Instructions:
 
 import re
 from datetime import datetime, timedelta
+from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,6 +37,11 @@ class Address(BaseModel):
         if country == "Canada" and not re.match(r"^[A-Z]\d[A-Z]\s?\d[A-Z]\d$", postal_code):
             raise ValueError("Invalid Canadian postal code")
         return postal_code
+
+
+class Currency(str, Enum):
+    CAD = "CAD"
+    USD = "USD"
 
 
 class Company(BaseModel):
@@ -94,6 +100,14 @@ class Invoice(BaseModel):
         description="Date when invoice was issued",
         default_factory=lambda: datetime.now(),
     )
+    payment_terms: datetime = Field(
+        description="Payment terms number of days from issue date",
+        default=30,
+    )
+    due_date: datetime = Field(
+        description="Due date for payment",
+        default_factory=lambda: datetime.now() + timedelta(days=30),
+    )
     supplier: Company = Field(
         description="The name of the supplier company organization.",
     )
@@ -108,11 +122,40 @@ class Invoice(BaseModel):
         description="Tax rate applied to the invoice line_items expressed as a percentage",
         default=13,
     )
-    payment_terms: str = Field(
-        description="Payment terms statement (e.g. 'Net 30', 'Due upon receipt')",
-        default="Net 30",
+    currency: Currency = Field(
+        description="Currency of invoice",
+        default=Currency.CAD,
     )
-    due_date: datetime = Field(
-        description="Due date for payment",
-        default_factory=lambda: datetime.now() + timedelta(days=30),
+    tax_total: float = Field(
+        description="Total tax amount",
+        default=0.0,
     )
+    subtotal: float = Field(
+        description="Subtotal of invoice line_items",
+        default=0.0,
+    )
+    total: float = Field(
+        description="Total of invoice line_items plus tax",
+        default=0.0,
+    )
+
+    from pydantic import model_validator
+
+    @model_validator(mode="after")
+    def calculate_totals(self) -> "Invoice":
+        self.subtotal = sum(item.quantity * item.unit_price for item in self.line_items)
+        self.tax_total = self.subtotal * (self.tax_rate / 100)
+        self.total = self.subtotal + self.tax_total
+        return self
+
+    @property
+    def tax_total_formatted(self) -> str:
+        return f"${self.tax_total:,.2f} " + self.currency.value
+
+    @property
+    def subtotal_formatted(self) -> str:
+        return f"${self.subtotal:,.2f} " + self.currency.value
+
+    @property
+    def total_formatted(self) -> str:
+        return f"${self.total:,.2f} " + self.currency.value
