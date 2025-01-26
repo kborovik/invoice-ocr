@@ -18,7 +18,7 @@ from psycopg.errors import UniqueViolation
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
-from .schema import Address, Company, InvoiceItem
+from .schema import Address, Company, Invoice, InvoiceItem
 from .settings import (
     POSTGRES_DB,
     POSTGRES_HOST,
@@ -224,35 +224,18 @@ def get_company(company_id: str) -> Company | None:
             return None
 
 
-def get_companies(limit: int = 2) -> list[Company] | None:
-    """Retrieves a list of the most recent companies from the database.
-
-    This function queries the database to fetch multiple companies, ordered by
-    their creation date in descending order. The number of companies returned is
-    controlled by the limit parameter.
-
-    Args:
-        limit (int, optional): Maximum number of companies to retrieve.
-            Defaults to 2.
-
-    Returns:
-        list[Company] | None: A list of Company objects containing the most
-            recent companies. Returns None if an error occurs.
-
-    Raises:
-        Exception: Logs the error and returns None if any database
-            or query-related error occurs during retrieval.
-    """
+def get_random_companies(limit: int = 2) -> list[Company] | None:
+    """Retrieves a list of random companies from the database."""
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Get Companies from DB"),
+        logfire.span("Get Random Companies from DB"),
     ):
         try:
             query = """
                 SELECT company_id
                 FROM companies
-                ORDER BY created_at DESC
+                ORDER BY RANDOM()
                 LIMIT %(limit)s;
             """
             cur.execute(query=query, params={"limit": limit})
@@ -414,26 +397,8 @@ def get_invoice_item(item_sku: str) -> InvoiceItem | None:
             return None
 
 
-def get_invoice_items(limit: int = 2) -> list[InvoiceItem]:
-    """Retrieves a list of the most recent invoice items from the database.
-
-    This function queries the database to fetch multiple invoice items, ordered by
-    their creation date in descending order. The number of items returned is
-    controlled by the limit parameter.
-
-    Args:
-        limit (int, optional): Maximum number of invoice items to retrieve.
-            Defaults to 2.
-
-    Returns:
-        list[InvoiceItem]: A list of InvoiceItem objects containing the most
-            recent invoice items. Returns an empty list if no items are found
-            or if an error occurs.
-
-    Raises:
-        Exception: Logs the error and returns an empty list if any database
-            or query-related error occurs during retrieval.
-    """
+def get_random_invoice_items(limit: int = 2) -> list[InvoiceItem]:
+    """Retrieves a list of random invoice items from the database."""
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
@@ -443,7 +408,7 @@ def get_invoice_items(limit: int = 2) -> list[InvoiceItem]:
             query = """
                 SELECT item_sku, item_info, quantity, unit_price
                 FROM invoice_items
-                ORDER BY created_at DESC
+                ORDER BY RANDOM()
                 LIMIT %(limit)s;
             """
             cur.execute(query=query, params={"limit": limit})
@@ -505,3 +470,11 @@ def find_invoice_item(query: str) -> list[InvoiceItem] | list[None]:
         except Exception as error:
             logfire.error(f"Failed to search invoice items: {error}")
             return []
+
+
+def add_invoice(invoice: Invoice) -> SqlId | None:
+    """Adds a new invoice to the database."""
+
+
+def get_invoice(invoice_number: int) -> Invoice | None:
+    """Retrieves an invoice from the database by its ID."""

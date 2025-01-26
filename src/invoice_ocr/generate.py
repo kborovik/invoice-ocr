@@ -21,7 +21,7 @@ from pydantic_ai import Agent, RunContext, UserError
 
 from invoice_ocr import db
 
-from .db import get_company, get_invoice_items
+from .db import get_random_companies, get_random_invoice_items
 from .schema import Company, Invoice, InvoiceItem
 
 
@@ -126,12 +126,14 @@ def create_invoice_items(quantity: int = 5) -> list[InvoiceItem]:
     return result.data
 
 
-def create_pdf_invoice(invoice: Invoice) -> None:
-    output_dir = Path("data")
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+def create_pdf_invoice(invoice: Invoice) -> bytes:
+    from weasyprint import HTML
 
+    # Set up Jinja2 environment
     env = Environment(loader=FileSystemLoader("src/invoice_ocr"))
     template = env.get_template("invoice.j2")
+
+    # Render the template with the invoice data
     html_content = template.render(
         invoice_number=invoice.invoice_number,
         issue_date=invoice.issue_date.strftime("%Y-%m-%d"),
@@ -146,21 +148,25 @@ def create_pdf_invoice(invoice: Invoice) -> None:
         total=invoice.total_formatted,
     )
 
-    output_file = output_dir / f"invoice-{invoice.invoice_number}.html"
+    # html_file = Path(f"data/{invoice.invoice_number}.html")
+    # html_file.write_text(html_content)
+    # Convert HTML to PDF
+    pdf_bytes = HTML(string=html_content).write_pdf()
 
-    output_file.write_text(html_content, encoding="utf-8")
+    return pdf_bytes
 
 
 if __name__ == "__main__":
-    supplier = get_company(company_id="MHIA5")
-    customer = get_company(company_id="SOLT8")
-    invoice_items = get_invoice_items(limit=2)
+    companies = get_random_companies(limit=2)
+    invoice_items = get_random_invoice_items(limit=4)
 
     invoice = Invoice(
         invoice_number="INV-0001",
-        supplier=supplier,
-        customer=customer,
+        supplier=companies[0],
+        customer=companies[1],
         line_items=invoice_items,
     )
 
-    create_pdf_invoice(invoice)
+    pdf_bytes = create_pdf_invoice(invoice)
+    pdf_file = Path(f"data/{invoice.invoice_number}.pdf")
+    pdf_file.write_bytes(pdf_bytes)

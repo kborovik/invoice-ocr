@@ -3,26 +3,24 @@
 
 <head>
 	<meta charset="utf-8" />
-	<title>A simple, clean, and responsive HTML invoice template</title>
+	<title>Xero-AI Test Invoice</title>
 
 	<style>
 		.invoice-box {
-			max-width: 800px;
-			margin: auto;
-			padding: 30px;
-			border: 1px solid #eee;
-			box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-			font-size: 16px;
-			line-height: 24px;
-			font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
 			color: #555;
+			font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+			font-size: 12px;
+			line-height: 20px;
+			margin: auto;
+			max-width: 800px;
+			padding: 20px;
 		}
 
 		.invoice-box table {
 			width: 100%;
 			line-height: inherit;
 			text-align: left;
-			padding-bottom: 40px;
+			padding-bottom: 20px;
 		}
 
 		.invoice-box table td {
@@ -47,8 +45,8 @@
 		}
 
 		.invoice-box table tr.top table td.title {
-			font-size: 45px;
-			line-height: 45px;
+			font-size: 18px;
+			line-height: 22px;
 			color: #333;
 		}
 
@@ -77,12 +75,22 @@
 		}
 
 		.invoice-box table tr.total td {
+			background: #eee;
 			font-weight: bold;
 			text-align: right;
-			font-size: 18px;
 		}
 
-		@media only screen and (max-width: 600px) {
+		@page {
+			size: Letter;
+			margin: 0;
+		}
+
+		section {
+			page-break-after: always;
+			break-after: page;
+		}
+
+		@media print (max-width: 600px) {
 			.invoice-box table tr.top table td {
 				width: 100%;
 				display: block;
@@ -94,20 +102,6 @@
 				display: block;
 				text-align: center;
 			}
-		}
-
-		/** RTL **/
-		.invoice-box.rtl {
-			direction: rtl;
-			font-family: Tahoma, 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-		}
-
-		.invoice-box.rtl table {
-			text-align: right;
-		}
-
-		.invoice-box.rtl table tr td:nth-child(2) {
-			text-align: left;
 		}
 	</style>
 </head>
@@ -121,11 +115,11 @@
 						<tr>
 							<td class="title">
 								<img src="https://sparksuite.github.io/simple-html-invoice-template/images/logo.png"
-									style="width: 100%; max-width: 300px" />
+									style="width: 300px; height: 100px; object-fit: contain;" />
 							</td>
 
 							<td>
-								Invoice #: {{ invoice_number }}<br />
+								<b>Invoice #: {{ invoice_number }}</b><br />
 								Issue Date: {{ issue_date }}<br />
 								Due Date: {{ due_date }}
 							</td>
@@ -180,8 +174,8 @@
 			<tr class="item">
 				<td>{{ item.item_info }}</td>
 				<td>{{ item.quantity }}</td>
-				<td>${{ "%.2f"|format(item.unit_price) }}</td>
-				<td>${{ "%.2f"|format(item.quantity * item.unit_price) }}</td>
+				<td>{{ item.unit_price_formatted }}</td>
+				<td>{{ item.total_price_formatted }}</td>
 			</tr>
 			{% endfor %}
 

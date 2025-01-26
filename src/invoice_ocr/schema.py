@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Address(BaseModel):
@@ -90,6 +90,23 @@ class InvoiceItem(BaseModel):
     unit_price: float = Field(
         description="Price per unit",
     )
+    total_price: float = Field(
+        description="Total price for the item",
+        default=0.0,
+    )
+
+    @model_validator(mode="after")
+    def calculate_total_price(self) -> "InvoiceItem":
+        self.total_price = self.quantity * self.unit_price
+        return self
+
+    @property
+    def unit_price_formatted(self) -> str:
+        return f"${self.unit_price:,.2f}"
+
+    @property
+    def total_price_formatted(self) -> str:
+        return f"${self.total_price:,.2f}"
 
 
 class Invoice(BaseModel):
@@ -139,11 +156,9 @@ class Invoice(BaseModel):
         default=0.0,
     )
 
-    from pydantic import model_validator
-
     @model_validator(mode="after")
     def calculate_totals(self) -> "Invoice":
-        self.subtotal = sum(item.quantity * item.unit_price for item in self.line_items)
+        self.subtotal = sum(item.total_price for item in self.line_items)
         self.tax_total = self.subtotal * (self.tax_rate / 100)
         self.total = self.subtotal + self.tax_total
         return self

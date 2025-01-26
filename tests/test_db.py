@@ -6,10 +6,10 @@ from invoice_ocr.db import (
     add_invoice_item,
     find_company,
     find_invoice_item,
-    get_companies,
     get_company,
     get_invoice_item,
-    get_invoice_items,
+    get_random_companies,
+    get_random_invoice_items,
 )
 from invoice_ocr.schema import Address, Company, InvoiceItem
 
@@ -60,11 +60,12 @@ def test_get_company():
 
 
 @pytest.mark.db
-def test_get_companies():
-    companies = get_companies()
+def test_get_random_companies():
+    limit = 1
+    companies = get_random_companies(limit=limit)
     assert companies is not None
     assert isinstance(companies, list)
-    assert len(companies) >= 1
+    assert len(companies) == limit
     assert isinstance(companies[0], Company)
 
 
@@ -98,9 +99,11 @@ def test_get_invoice_item():
 
 
 @pytest.mark.db
-def test_get_invoice_items():
-    invoice_items = get_invoice_items(limit=1)
+def test_get_random_invoice_items():
+    limit = 1
+    invoice_items = get_random_invoice_items(limit=limit)
     assert invoice_items is not None
+    assert len(invoice_items) == limit
     assert isinstance(invoice_items, list)
     assert isinstance(invoice_items[0], InvoiceItem)
 

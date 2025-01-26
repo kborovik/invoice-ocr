@@ -8,12 +8,13 @@ dependencies = [
   "logfire[psycopg,system-metrics]>=2.9.0",
   "psycopg[binary,pool]>=3.2.3",
   "pydantic-ai-slim[anthropic,logfire,openai,vertexai]>=0.0.14",
+  "weasyprint>=63.1",
 ]
 description = "Process invoices using Google Cloud Vision API"
 name = "invoice-ocr"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "2025.01.25.post816"
+version = "2025.01.25.post1945"
 
 [project.scripts]
 invoice-ocr = "invoice_ocr:main"
