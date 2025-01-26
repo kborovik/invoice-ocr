@@ -80,7 +80,6 @@ def add_company(company: Company) -> SqlId | None:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Add Company to DB"),
     ):
         try:
             query_address = """
@@ -160,7 +159,6 @@ def get_company(company_id: str) -> Company | None:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Get Company from DB"),
     ):
         try:
             query = """
@@ -215,8 +213,6 @@ def get_company(company_id: str) -> Company | None:
                 else None,
             )
 
-            logfire.info(f"Retrieved company: {company.company_id} - {company.company_name}")
-
             return company
 
         except Exception as error:
@@ -229,7 +225,6 @@ def get_random_companies(limit: int = 2) -> list[Company] | None:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Get Random Companies from DB"),
     ):
         try:
             query = """
@@ -272,7 +267,6 @@ def find_company(query: str) -> list[Company] | list[None]:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Find Companies in DB"),
     ):
         try:
             search = f"%{query}%"
@@ -322,7 +316,6 @@ def add_invoice_item(invoice_item: InvoiceItem) -> SqlId | None:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Add Invoice Item to DB"),
     ):
         try:
             query_invoice_item = """
@@ -370,7 +363,6 @@ def get_invoice_item(item_sku: str) -> InvoiceItem | None:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Get Invoice Item from DB"),
     ):
         try:
             query = """
@@ -386,10 +378,6 @@ def get_invoice_item(item_sku: str) -> InvoiceItem | None:
 
             invoice_item = InvoiceItem(**result)
 
-            logfire.info(
-                f"Retrieved invoice item: {invoice_item.item_sku} - {invoice_item.item_info}"
-            )
-
             return invoice_item
 
         except Exception as error:
@@ -402,7 +390,6 @@ def get_random_invoice_items(limit: int = 2) -> list[InvoiceItem]:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Get Invoice Items from DB"),
     ):
         try:
             query = """
@@ -448,7 +435,6 @@ def find_invoice_item(query: str) -> list[InvoiceItem] | list[None]:
     with (
         POSTGRES_POOL.connection() as conn,
         conn.cursor(row_factory=dict_row) as cur,
-        logfire.span("Find Invoice Items in DB"),
     ):
         try:
             search = f"%{query}%"

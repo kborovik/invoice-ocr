@@ -5,7 +5,7 @@ import logfire
 from .__main__ import main
 from .settings import LOGFIRE_SERVICE_NAME
 
-__all__ = ["invoice_ocr", "main"]
+__all__ = ["__version__", "invoice_ocr", "main"]
 __version__ = version("invoice_ocr")
 
 logfire.configure(
