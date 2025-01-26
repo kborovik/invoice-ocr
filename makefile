@@ -48,7 +48,7 @@ ruff-format:
 	ruff format .
 
 ruff-lint:
-	ruff check --fix .
+	ruff check .
 
 lint: ruff-lint ruff-format ## Lint Python code
 

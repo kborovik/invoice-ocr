@@ -6,8 +6,6 @@ import logfire
 
 from . import db
 from . import generate as gen
-from .db import add_company, add_invoice_item, get_random_companies, get_random_invoice_items
-from .generate import create_company, create_invoice_items, create_pdf_invoice
 from .schema import Invoice
 
 
@@ -59,8 +57,8 @@ def main() -> None:
         args.output_dir.mkdir(parents=True, exist_ok=True)
 
         for i in range(args.num_invoices):
-            companies = get_random_companies(limit=2)
-            invoice_items = get_random_invoice_items(limit=4)
+            companies = db.get_random_companies(limit=2)
+            invoice_items = db.get_random_invoice_items(limit=randint(1, 10))
 
             invoice = Invoice(
                 invoice_number=f"INV-{randint(1000, 9999)}",
@@ -69,7 +67,7 @@ def main() -> None:
                 line_items=invoice_items,
             )
 
-            pdf_bytes = create_pdf_invoice(invoice)
+            pdf_bytes = gen.create_pdf_invoice(invoice)
             pdf_path = args.output_dir / f"{invoice.invoice_number}.pdf"
             pdf_path.write_bytes(pdf_bytes)
 

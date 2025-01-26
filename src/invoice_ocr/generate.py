@@ -13,7 +13,6 @@ Cody Instructions:
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
 
 import logfire
 from jinja2 import Environment, FileSystemLoader
@@ -21,7 +20,6 @@ from pydantic_ai import Agent, RunContext, UserError
 
 from invoice_ocr import db
 
-from .db import get_random_companies, get_random_invoice_items
 from .schema import Company, Invoice, InvoiceItem
 
 
@@ -157,16 +155,4 @@ def create_pdf_invoice(invoice: Invoice) -> bytes:
 
 
 if __name__ == "__main__":
-    companies = get_random_companies(limit=2)
-    invoice_items = get_random_invoice_items(limit=4)
-
-    invoice = Invoice(
-        invoice_number="INV-0001",
-        supplier=companies[0],
-        customer=companies[1],
-        line_items=invoice_items,
-    )
-
-    pdf_bytes = create_pdf_invoice(invoice)
-    pdf_file = Path(f"data/{invoice.invoice_number}.pdf")
-    pdf_file.write_bytes(pdf_bytes)
+    pass
