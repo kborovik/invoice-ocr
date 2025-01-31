@@ -182,13 +182,10 @@ POSTGRES_PASSWORD ?= postgres
 
 POSTGRES_URI := postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)
 
-.docker-init:
-	set -e
-	docker volume create postgres
-	docker volume create invoice-ocr
-	touch $@
+docker-init:
+	-docker volume create invoice-ocr-postgres
 
-docker-start: .docker-init ## Start Docker Compose
+docker-start: docker-init ## Start Docker Compose
 	docker compose up --detach --remove-orphans --wait
 
 docker-stop: ## Stop Docker Compose
